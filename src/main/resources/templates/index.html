@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Notiz-Speicher | Notiz erstellen!</title>
+    <link rel="icon" href="https://i.ibb.co/QmCwBnK/favicon.png" type="image/png">
+    <style>
+        /* Hintergrund */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #E50244;
+        }
+
+        /* Header */
+        .header {
+            overflow: hidden;
+            background-color: #000;
+            padding: 15px;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .header-right {
+            float: right;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            padding: 10px 20px;
+            transition: background-color 0.3s, color 0.3s, padding 0.3s;
+        }
+
+        .header a:hover {
+            background-color: #555;
+            color: white;
+            padding: 12px 22px;
+        }
+
+        /* Notizen */
+        #notizen-container {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .notiz {
+            background-color: #f4f4f4;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        #notizen {
+            display: inline-block;
+            width: 400px;
+            margin: 0 auto;
+        }
+
+        .notiz h3 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .notiz p {
+            margin-bottom: 10px;
+        }
+
+        .notiz img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+
+        /* Formularelemente */
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 18px;
+        }
+
+        textarea {
+            font-family: Arial, sans-serif;
+            resize: none;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #000;
+            color: white;
+            text-align: center;
+            padding: 5px;
+        }
+
+        /* Überschrift Notiz-Speicher */
+        h1 {
+            color: #fff;
+        }
+
+        #searchInput {
+            font-size: 14.5px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="header-right">
+        <a class="dashboard" href="/dashboard">Dashboard</a>
+        <a th:href="@{/logout}">Abmelden</a>
+    </div>
+</div>
+<div id="notizen-container">
+    <div id="notizen">
+        <h1>Notiz-Speicher</h1>
+        <input type="text" id="titel" placeholder="Titel eingeben">
+        <select id="notiz-kategorie" class="filter-dropdown">
+            <option value="">Kategorie auswählen</option>
+            <option value="Persönlich">Persönlich</option>
+            <option value="Arbeit">Arbeit</option>
+            <option value="Schule / Studium">Schule / Studium</option>
+            <option value="Einkaufen">Einkaufen</option>
+        </select>
+        <input type="file" id="bildUpload" accept="image/*">
+        <br><br>
+        <textarea id="inhalt" rows="3" placeholder="Notiz eingeben"></textarea>
+        <button onclick="notizHinzufuegen()">Notiz hinzufügen</button>
+
+        <div id="notizenListe"></div>
+    </div>
+</div>
+<script>
+
+    let userId = 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/notes')
+            .then(response => response.json())
+            .then(data => {
+                const notizenListe = document.getElementById('notizenListe');
+                const searchInput = document.getElementById('searchInput');
+                const categoryDropdown = document.getElementById('categoryDropdown');
+
+                function displayNotes(searchTerm, categoryFilter) {
+                    notizenListe.innerHTML = '';
+
+                    data.forEach(note => {
+                        if ((note.titel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                note.kategorie.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                note.inhalt.toLowerCase().includes(searchTerm.toLowerCase())) &&
+                            (categoryFilter === '' || note.kategorie === categoryFilter)) {
+
+                            const div = document.createElement('div');
+
+                            const category = document.createElement('p');
+                            category.textContent = "Kategorie: " + note.kategorie;
+                            category.style.color = 'grey';
+                            category.style.fontStyle = 'italic';
+                            div.appendChild(category);
+
+                            const title = document.createElement('h3');
+                            title.textContent = note.titel;
+                            div.appendChild(title);
+
+                            const content = document.createElement('p');
+                            content.textContent = note.inhalt;
+                            div.appendChild(content);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'Löschen';
+                            deleteButton.style.backgroundColor = '#f44336';
+                            deleteButton.style.color = 'white';
+                            deleteButton.style.border = 'none';
+                            deleteButton.style.borderRadius = '10x';
+                            deleteButton.style.padding = '12px 25px';
+                            deleteButton.addEventListener('click', function() {
+                                const notizId = note.id;
+                                fetch('/notes/' + notizId, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                })
+                                    .then(response => {
+                                        if (!response.ok) {
+                                            throw new Error('Fehler beim Löschen der Notiz');
+                                        }
+                                        div.remove();
+                                    });
+                            });
+
+                            const createdOn = document.createElement('p');
+                            createdOn.textContent = 'Erstellt am: ' + note.erstellungszeitpunkt;
+                            div.appendChild(createdOn);
+
+                            const br = document.createElement('br');
+                            notizenListe.appendChild(div);
+                            notizenListe.appendChild(br);
+
+                            div.style.borderRadius = '10px';
+                            div.style.backgroundColor = '#fff';
+                            div.style.padding = '10px';
+                        }
+                    });
+                }
+
+                searchInput.addEventListener('input', function(event) {
+                    const searchTerm = event.target.value;
+                    const categoryFilter = categoryDropdown.value;
+                    displayNotes(searchTerm, categoryFilter);
+                });
+
+                categoryDropdown.addEventListener('change', function(event) {
+                    const searchTerm = searchInput.value;
+                    const categoryFilter = event.target.value;
+                    displayNotes(searchTerm, categoryFilter);
+                });
+
+                displayNotes('', '');
+            })
+            .catch(error => console.error('Fehler beim Laden der Notizen:', error));
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/user')
+            .then(response => response.json())
+            .then(data => {
+                userId = data.userId;
+                console.log('userId: ', userId);
+            });
+    });
+
+    function notizHinzufuegen() {
+        var titel = document.getElementById("titel").value;
+        var inhalt = document.getElementById("inhalt").value;
+        var kategorie = document.getElementById("notiz-kategorie").value;
+        var bildDatei = document.getElementById("bildUpload").files[0];
+
+        if (titel === "" || inhalt === "" || kategorie === "") {
+            alert("Bitte fülle Titel, Inhalt und Kategorie aus.");
+            return;
+        }
+
+        var notizDiv = document.createElement("div");
+        notizDiv.className = "notiz";
+        notizDiv.innerHTML = "<p class='kategorie'>Kategorie: " + kategorie + "</p><h3>" + titel + "</h3><p>" + inhalt + "</p>";
+
+        if (bildDatei) {
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var bildUrl = event.target.result;
+                var bildContainer = document.createElement("div");
+                bildContainer.className = "bild-container";
+                bildContainer.innerHTML = "<img src='" + bildUrl + "'>";
+                notizDiv.appendChild(bildContainer);
+            };
+            reader.readAsDataURL(bildDatei);
+        }
+
+        var deleteBtn = document.createElement("button");
+        deleteBtn.textContent = 'Löschen';
+        deleteBtn.style.backgroundColor = '#f44336';
+        deleteBtn.style.borderRadius = '10x';
+        deleteBtn.style.padding = '12px 25px';
+        deleteBtn.onclick = function() {
+            loescheNotiz(notizDiv);
+        };
+
+        var now = new Date();
+        now.setSeconds(0);
+        var timestamp = now.toLocaleString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+
+
+        var timestampElement = document.createElement("p");
+        timestampElement.textContent = "Erstellt am: " + timestamp;
+        notizDiv.appendChild(timestampElement);
+
+        document.getElementById("notizenListe").appendChild(notizDiv);
+
+        document.getElementById("titel").value = "";
+        document.getElementById("inhalt").value = "";
+        document.getElementById("notiz-kategorie").selectedIndex = 0;
+        document.getElementById("bildUpload").value = "";
+
+        const noteData = {
+            titel: titel,
+            inhalt: inhalt,
+            kategorie: kategorie,
+            benutzerId: userId
+        };
+
+        fetch('/notes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(noteData)
+        });
+    }
+
+    function loescheNotiz(notizDiv) {
+        var bildContainer = notizDiv.querySelector('.bild-container');
+        if (bildContainer) {
+            bildContainer.remove();
+        }
+
+        notizDiv.remove();
+    }
+
+</script>
+</body>
+<footer>
+    <p>
+        <b>&copy; 2024 Notiz-Speicher </b>by <b>Felix Köhler </b>&<b> Luca Lezius</b>
+    </p>
+</footer>
+</html>

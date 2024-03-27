@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Notiz-Speicher | Dashboard</title>
+    <link rel="icon" href="https://i.ibb.co/QmCwBnK/favicon.png" type="image/png">
+    <style>
+        /* Hintergrund */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #E50244;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        .header {
+            overflow: hidden;
+            background-color: #000;
+            padding: 15px;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .header-right {
+            float: right;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            padding: 10px 20px;
+            transition: background-color 0.3s, color 0.3s, padding 0.3s;
+        }
+
+        .header a:hover {
+            background-color: #555;
+            color: white;
+            padding: 12px 22px;
+        }
+
+        /* Notizen */
+        #notizen-container {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        #notizen {
+            display: inline-block;
+            width: 400px;
+            margin: 0 auto;
+        }
+
+        .notiz h3 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .notiz p {
+            margin-bottom: 10px;
+        }
+
+        .notiz img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+
+        /* Formularelemente */
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 18px;
+        }
+
+        textarea {
+            font-family: Arial, sans-serif;
+            resize: none;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #000;
+            color: white;
+            text-align: center;
+            padding: 5px;
+        }
+
+        /* Überschrift Notiz-Speicher */
+        h1 {
+            color: #fff;
+        }
+
+        #searchInput {
+            font-size: 14.5px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="header-right">
+        <a class="note" href="/">Notiz erstellen</a>
+        <a th:href="@{/logout}">Abmelden</a>
+    </div>
+</div>
+<div id="notizen-container">
+    <div id="notizen">
+        </select>
+
+        <h1>Notiz-Speicher</h1>
+        <select id="categoryDropdown">
+            <option value="">Alle Kategorien</option>
+            <option value="Persönlich">Persönlich</option>
+            <option value="Arbeit">Arbeit</option>
+            <option value="Schule / Studium">Schule / Studium</option>
+            <option value="Einkaufen">Einkaufen</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="Suche nach Titel, Erstellungsdatum, Inhalt oder Kategorie">
+        <div id="notizenListe"></div>
+
+    </div>
+</div>
+
+<script>
+
+    let userId = 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/notes')
+            .then(response => response.json())
+            .then(data => {
+                const notizenListe = document.getElementById('notizenListe');
+                const searchInput = document.getElementById('searchInput');
+                const categoryDropdown = document.getElementById('categoryDropdown');
+
+                function displayNotes(searchTerm, categoryFilter) {
+                    notizenListe.innerHTML = '';
+
+                    data.forEach(note => {
+                        if ((note.titel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                note.kategorie.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                note.inhalt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                note.erstellungszeitpunkt.includes(searchTerm.toLowerCase())) &&
+                            (categoryFilter === '' || note.kategorie === categoryFilter)) {
+
+                            const div = document.createElement('div');
+
+                            const category = document.createElement('p');
+                            category.textContent = "Kategorie: " + note.kategorie;
+                            category.style.color = 'grey';
+                            category.style.fontStyle = 'italic';
+                            div.appendChild(category);
+
+                            const title = document.createElement('h3');
+                            title.textContent = note.titel;
+                            div.appendChild(title);
+
+                            const content = document.createElement('p');
+                            content.innerHTML = renderContentWithLinks(note.inhalt);
+                            div.appendChild(content);
+
+                            const shareButton = document.createElement('button');
+                            shareButton.textContent = 'Teilen';
+                            shareButton.style.backgroundColor = '#4CAF50';
+                            shareButton.style.color = 'white';
+                            shareButton.style.border = 'none';
+                            shareButton.style.borderRadius = '10px';
+                            shareButton.style.padding = '12px 25px';
+                            shareButton.style.marginRight = '5px';
+                            shareButton.addEventListener('click', function() {
+                                const shareLink = 'https://notiz-speicher.de/share/' + generateGUID();
+                                alert('Link teilen: ' + shareLink);
+                            });
+                            div.appendChild(shareButton);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'Löschen';
+                            deleteButton.style.backgroundColor = '#f44336';
+                            deleteButton.style.color = 'white';
+                            deleteButton.style.border = 'none';
+                            deleteButton.style.borderRadius = '10px';
+                            deleteButton.style.padding = '12px 25px';
+                            deleteButton.addEventListener('click', function() {
+
+                                const notizId = note.id;
+                                fetch('/notes/' + notizId, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                })
+                                    .then(response => {
+                                        if (!response.ok) {
+                                        }
+                                        div.remove();
+                                    });
+                            });
+                            div.appendChild(deleteButton);
+
+                            const createdOn = document.createElement('p');
+                            createdOn.textContent = 'Erstellt am: ' + note.erstellungszeitpunkt;
+                            div.appendChild(createdOn);
+
+                            const br = document.createElement('br');
+                            notizenListe.appendChild(div);
+                            notizenListe.appendChild(br);
+
+                            div.style.borderRadius = '10px';
+                            div.style.backgroundColor = '#fff';
+                            div.style.padding = '10px';
+                        }
+                    });
+                }
+
+                function renderContentWithLinks(content) {
+                    return content.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+                }
+
+                searchInput.addEventListener('input', function(event) {
+                    const searchTerm = event.target.value;
+                    const categoryFilter = categoryDropdown.value;
+                    displayNotes(searchTerm, categoryFilter);
+                });
+
+                categoryDropdown.addEventListener('change', function(event) {
+                    const searchTerm = searchInput.value;
+                    const categoryFilter = event.target.value;
+                    displayNotes(searchTerm, categoryFilter);
+                });
+
+                displayNotes('', '');
+            })
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/user')
+            .then(response => response.json())
+            .then(data => {
+                userId = data.userId;
+                console.log('userId: ', userId);
+            });
+    });
+
+    function generateGUID() {
+        let guid = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let i = 0; i < 10; i++) {
+            guid += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return guid;
+    }
+
+</script>
+</body>
+<footer>
+    <p>
+        <b>&copy; 2024 Notiz-Speicher </b>by <b>Felix Köhler </b>&<b> Luca Lezius</b>
+    </p>
+</footer>
+</html>

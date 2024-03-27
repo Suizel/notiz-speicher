@@ -1,0 +1,50 @@
+Schritt-für-Schritt-Anleitung zur Projekt-Einrichtung:
+
+Einleitung:
+Diese Anleitung erläutert detailliert die Schritte zum erfolgreichen Starten des Spring Boot Projekts "Notiz-Speicher".
+
+Technische Voraussetzungen:
+
+1. Apache Maven:
+https://maven.apache.org/
+
+2. Java Development Kit 22 (JDK):
+https://www.oracle.com/java/technologies/downloads/#java22
+
+3. XAMPP:
+https://www.apachefriends.org/index.html
+
+Schritte zum Starten des Spring Boot Projekts "Notiz-Speicher":
+
+1. Projekt herunterladen:
+
+Extrahieren Sie das heruntergeladene ZIP-Archiv in einen von Ihnen gewählten Ordner.
+
+2. Projektimport:
+
+Öffnen Sie Ihre bevorzugte IDE wie IntelliJ IDEA oder Visual Studio Code und importieren Sie das Projekt aus dem zuvor extrahierten Ordner.
+
+3. Codebearbeitung:
+
+Navigieren Sie zur Datei "application.properties" und passen Sie bei Bedarf den MySQL-Benutzernamen und das Passwort an.
+Standardmäßig sind die Anmeldedaten für MySQL in XAMPP wie folgt: Benutzername: root / Passwort: (leer lassen)
+
+4. MySQL Datenbank:
+
+Bevor das Spring Boot Projekt gestartet werden kann, ist es erforderlich, eine MySQL-Datenbank mit dem Namen "notiz-speicher" einzurichten.
+
+5. Anwendung starten:
+
+Starten Sie das Projekt, indem Sie die Main Klasse "NotizSpeicherApplication" öffnen und die "Run"-Funktion verwenden.
+Wenn in der Konsole die Meldung erscheint: "Tomcat started on port 8080 (http) with context path ''", ist das Projekt erfolgreich gestartet.
+
+6. Überprüfung der Anwendung:
+
+Öffnen Sie Ihren Webbrowser und navigieren Sie zur Webseite http://localhost:8080, um sicherzustellen, dass die Anwendung ordnungsgemäß gestartet wurde und korrekt funktioniert.
+
+7. Abschluss:
+
+Nach erfolgreicher Durchführung dieser Schritte sollte das Projekt gestartet und einsatzbereit sein.
+Sie können nun einen Account erstellen, wobei zu beachten ist, dass keine Bestätigungsmails versendet werden. Der Account wird direkt erstellt.
+
+Für weitere Fragen oder Unterstützung stehen wir Ihnen gerne für ein WebEx Meeting zur Verfügung. Bitte zögern Sie nicht, uns umgehend zu kontaktieren, sollten Probleme auftreten.
